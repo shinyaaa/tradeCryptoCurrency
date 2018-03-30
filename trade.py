@@ -1,11 +1,11 @@
-import requests
-from urllib.parse import urlencode
 import hashlib
 import hmac
 import json
-from time import time, sleep
 import logging
-import sys
+from cmath import sqrt
+from time import time, sleep
+from urllib.parse import urlencode
+import requests
 
 #パラメータ
 KEY = ''
@@ -14,7 +14,7 @@ CURRENCY_PAIR = 'btc_jpy'
 period = 20
 
 
-last_price = []
+last_price_list = []
 
 
 # 現物取引API
@@ -61,29 +61,30 @@ def getLastPrice():
 
 
 # 残高取得
-def getBalance(KEY, SECRET):
+def getBalance(key, secret):
     params = {
-        'method': 'get_info',
+        'method': 'get_info2',
+        'nonce': time()
     }
     response_dict = tradeRequester(params, key, secret)
-    jpy = response_dict['return']['fund'][jpy]
-    btc = response_dict['return']['fund'][btc]
+    jpy = response_dict['return']['funds']['jpy']
+    btc = response_dict['return']['funds']['btc']
     return jpy, btc
 
 
 # 移動平均線
-def moving_ave(last_price,period):
+def moving_ave(last_price, period):
     sum_price = 0
     for price in last_price[-period:]:
         sum_price += price
-    return sum_price/period
+    return sum_price / period
 
 
 # 標準偏差
-def st_div(price,period):
+def st_div(price, period):
     sum_price = 0
     sum_price_2 = 0
-    for price in last_price[-period:]:
+    for price in last_price_list[-period:]:
         sum_price += price
         sum_price_2 += price**2
     return sqrt((period*sum_price_2-sum_price**2)/period*(period-1))
@@ -109,6 +110,7 @@ counter = 0
 logger.info('準備完了')
 
 while True:
+    print(len(last_price_list))
     try:
         #ループ開始処理
         counter += 1
@@ -117,13 +119,13 @@ while True:
         current_timestamp = getTimestamp(KEY, SECRET)
         order_price = getLastPrice()
         jpyBalance, btcBalance = getBalance(KEY, SECRET)
-        last_price.append(order_price)
-        logger.info('現在価格: {}'.format(last_price))
+        last_price_list.append(order_price)
+        logger.info('現在価格: {}'.format(last_price_list[-1]))
         buy_flag = False
 
-        if counter >= period:
-            m = moving_ave(last_price, period)
-            b = m + st_div(last_price, period)
+        if len(last_price_list) >= period:
+            m = moving_ave(last_price_list, period)
+            b = m + st_div(last_price_list, period)
 
             if m > b and buy_flag == False:
                 amount = round((jpyBalance / order_price), 4)
@@ -170,6 +172,5 @@ while True:
 
     except Exception as e:
         assert isinstance(logger, object)
-    logger.warning('取引ループ中にエラー発生、60秒待機:  %r\n' % e)
-    sleep(60)
-
+        logger.warning('取引ループ中にエラー発生、60秒待機:  %r\n' % e)
+        sleep(60)
