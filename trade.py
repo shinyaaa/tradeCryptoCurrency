@@ -90,7 +90,7 @@ def st_div(price, period):
     return sqrt((period*sum_price_2-sum_price**2)/period*(period-1))
 
 
-##ログ取得設定
+# ログ取得設定
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
@@ -100,11 +100,11 @@ stream_handler.setFormatter(formatter)
 
 logger.addHandler(stream_handler)
 
-##時刻変数定義
+# 時刻変数定義
 current_timestamp = None
 previous_timestamp = None
 
-##ループカウンタ初期化
+# ループカウンタ初期化
 counter = 0
 
 logger.info('準備完了')
@@ -112,7 +112,7 @@ logger.info('準備完了')
 while True:
     print(len(last_price_list))
     try:
-        #ループ開始処理
+        # ループ開始処理
         counter += 1
         logger.info('ラウンド{}開始'.format(counter))
         previous_timestamp = current_timestamp
